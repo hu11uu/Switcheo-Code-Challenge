@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Swap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #101820;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .form {
+            background: linear-gradient(135deg, #0D1B2A, #1F2833);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 600;
+            color: #ECF0F1;
+            margin-bottom: 20px;
+        }
+
+        .formGroup {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            font-size: 14px;
+            color: #BDC3C7;
+            position: absolute;
+            top: -10px;
+            left: 12px;
+            background-color: #101820;
+            padding: 0 5px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            color: #BDC3C7;
+            border: 2px solid #7F8C8D;
+            border-radius: 12px;
+            background-color: #2C3E50;
+            transition: all 0.3s ease;
+            outline: none;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        }
+
+        input::placeholder, select::placeholder {
+            color: #BDC3C7;
+            opacity: 0.7;
+        }
+
+        input:focus::placeholder, select:focus::placeholder {
+            color: #ECF0F1;
+            opacity: 1;
+        }
+
+        input:focus, select:focus {
+            border-color: #3498DB;
+            background-color: #1A2C40;
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            color: white;
+            background: linear-gradient(45deg, #2980B9, #3498DB);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #3498DB, #2980B9);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .error {
+            color: red;
+            font-size: 12px;
+            display: none;
+            margin-top: 5px;
+        }
+
+        .success {
+            display: none;
+            text-align: center;
+            font-size: 16px;
+            color: #27AE60;
+            margin-top: 20px;
+        }
+
+        .currencySelect {
+            position: relative;
+        }
+
+        .currencySelect:after {
+            content: '▼';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #BDC3C7;
+        }
+
+        .swapIcon {
+            display: block;
+            margin: 20px auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .swapIcon:hover {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="form">
+        <h1>Midnightswap</h1>
+        <form id="swapForm">
+            <div class="formGroup currencySelect">
+                <label for="fromCurrency">From Currency</label>
+                <select id="fromCurrency" name="fromCurrency" required>
+                    <option value="">Select Currency</option>
+                </select>
+                <div class="error" id="fromCurrencyError">Please select a valid currency.</div>
+            </div>
+            <div class="formGroup">
+                <label for="fromAmount">Amount</label>
+                <input type="number" id="fromAmount" name="fromAmount" placeholder="Enter Amount" required>
+                <div class="error" id="fromAmountError">Please enter a valid amount.</div>
+            </div>
+            <img src="https://img.icons8.com/ios/50/ffffff/swap.png" alt="swap" class="swapIcon" onclick="swapCurrencies()">
+            <div class="formGroup currencySelect">
+                <label for="toCurrency">To Currency</label>
+                <select id="toCurrency" name="toCurrency" required>
+                    <option value="">Select Currency</option>
+                </select>
+                <div class="error" id="toCurrencyError">Please select a valid currency.</div>
+            </div>
+            <div class="formGroup">
+                <label for="toAmount">Amount</label>
+                <input type="number" id="toAmount" name="toAmount" placeholder="Calculated Amount" disabled>
+            </div>
+            <button type="submit" id="swapButton">Swap</button>
+        </form>
+        <div id="successMessage" class="success">Swap successful!</div>
+    </div>
+
+    <script>
+        async function fetchCurrencies() {
+            try {
+                const response = await fetch("https://interview.switcheo.com/prices.json");
+                const data = await response.json();
+
+                const currencies = data.map(item => item.currency);
+
+                const fromCurrencySelect = document.getElementById("fromCurrency");
+                const toCurrencySelect = document.getElementById("toCurrency");
+
+                currencies.forEach(currency => {
+                    const option = document.createElement("option");
+                    option.value = currency;
+                    option.textContent = currency;
+                    fromCurrencySelect.appendChild(option);
+
+                    const toOption = document.createElement("option");
+                    toOption.value = currency;
+                    toOption.textContent = currency;
+                    toCurrencySelect.appendChild(toOption);
+                });
+            } catch (error) {
+                console.error("Error fetching currencies:", error);
+                alert("Error fetching currency data.");
+            }
+        }
+
+        fetchCurrencies();
+
+        function swapCurrencies() {
+            const fromCurrencySelect = document.getElementById("fromCurrency");
+            const toCurrencySelect = document.getElementById("toCurrency");
+
+            const tempValue = fromCurrencySelect.value;
+            fromCurrencySelect.value = toCurrencySelect.value;
+            toCurrencySelect.value = tempValue;
+        }
+
+        document.getElementById("swapForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            clearErrors();
+
+            const fromCurrency = document.getElementById("fromCurrency").value.toUpperCase().trim();
+            const fromAmount = document.getElementById("fromAmount").value.trim();
+            const toCurrency = document.getElementById("toCurrency").value.toUpperCase().trim();
+
+            let isValid = true;
+
+            if (!fromCurrency) {
+                showError("fromCurrencyError");
+                isValid = false;
+            }
+
+            if (!fromAmount || isNaN(fromAmount) || parseFloat(fromAmount) <= 0) {
+                showError("fromAmountError");
+                isValid = false;
+            }
+
+            if (!toCurrency) {
+                showError("toCurrencyError");
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            try {
+                const response = await fetch("https://interview.switcheo.com/prices.json");
+                const prices = await response.json();
+
+                if (!prices.some(item => item.currency === fromCurrency) || !prices.some(item => item.currency === toCurrency)) {
+                    alert("One or both currencies are not supported.");
+                    return;
+                }
+
+                const fromRate = prices.find(item => item.currency === fromCurrency).price;
+                const toRate = prices.find(item => item.currency === toCurrency).price;
+                const exchangedAmount = (parseFloat(fromAmount) * fromRate) / toRate;
+
+                document.getElementById("toAmount").value = exchangedAmount.toFixed(2);
+                document.getElementById("successMessage").style.display = "block";
+            } catch (error) {
+                console.error("Error fetching prices:", error);
+                alert("An error occurred while fetching exchange rates.");
+            }
+        });
+
+        function showError(fieldId) {
+            document.getElementById(fieldId).style.display = "block";
+        }
+
+        function clearErrors() {
+            const errorMessages = document.querySelectorAll(".error");
+            errorMessages.forEach(error => error.style.display = "none");
+            document.getElementById("successMessage").style.display = "none";
+        }
+    </script>
+</body>
+</html>
